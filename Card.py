@@ -4,6 +4,15 @@ class Card(object):
         self.name = name
         self.image = image
 
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def category(self):
+        return self.category
+
+    def name(self):
+        return self.name
+
 
 class Weapon(Card):
     def __init__(self, name, image):
@@ -18,25 +27,8 @@ class Character(Card):
         self.name = name
         self.image = image
 
-
-class Room(Card):
-    def __init__(self, name, image, door_list, secrete_pass=False):
+class Room_card(Card):
+    def __init__(self, name, image):
         self.category = 'room'
         self.name = name
         self.image = image
-        self.door_list = door_list
-        self.secrete_pass = secrete_pass
-        self.occupied = False
-        self.blocked = False
-
-    def check_blocked(self):
-        return self.blocked
-
-    def check_occupied(self):
-        return self.occupied
-
-    def change_occupied(self):
-        self.occupied = not self.occupied
-
-    def change_blocked(self):
-        self.blocked = not self.blocked
