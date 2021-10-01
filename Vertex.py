@@ -3,6 +3,7 @@ class Vertex(object):
         self.occupied = False
         self.original_neighbors = []
         self.current_neighbors = []
+        self.label = None
 
     def add_neighbor(self, neighbor):
         if neighbor not in self.original_neighbors:
@@ -32,20 +33,30 @@ class Vertex(object):
         for neighbor in self.neighbors:
             neighbor.copy_neighbors()
 
+    def __eq__(self, other):
+        return self.label == other.label
 
+    def get_label(self):
+        return self.label
 
 
 class Blank(Vertex):
     def __init__(self, x, y):
         self.coordinate = [x, y]
         self.label = "Blank_" + x + "_" + y
+        self.category = "Blank"
+
+    def get_coor(self):
+        return self.coordinate
 
 
 class GreenStart(Vertex):
     def __init__(self, char_name):
         self.label = "Start_" + char_name
+        self.category = "Start"
 
 
 class Room(Vertex):
     def __init__(self, room_name):
         self.label = room_name
+        self.category = "Room"

@@ -12,7 +12,7 @@ class Player(object):
         self.p_weapons, self.im_weapons = [], []
         self.p_rooms, self.im_rooms = [], []
         self.p_characters, self.im_characters = [], []
-        self.curr_location = None
+        self.curr_location = None  # should be a vertex
         for card in all_cards:  # put card into different categories
             match card.category():
                 case "weapon":

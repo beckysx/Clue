@@ -7,11 +7,17 @@ class Board(object):
     def __init__(self, V, player_list):  # char list is  list of player
         self.vertices = V
         self.player_order = player_list.sort()
-        if len(player_list) < 6:
+        self.players_set_up()
+
+    def players_set_up(self):
+        if len(self.player_order) < 6:
             for player in self.player_order:
                 order_in_game = self.player_order.index(player)
                 if player.get_num() != order_in_game:
                     player.change_num(order_in_game)
+                start_position = self.getV("Start_" + player.get_name())
+                player.change_location(start_position)
+                start_position.occupy()
         else:
             for player in self.player_order:
                 start_position = self.getV("Start_" + player.get_name())
@@ -23,6 +29,11 @@ class Board(object):
             if v.label == v_label:
                 return v
         return False
+
+    def getV(self, v):
+        for vertex in self.vertices:
+            if vertex == v:
+                return vertex
 
     def add_record(self, char, position):  # occupy new positon and de_occupy old one
         char_record = self.moving_record[char.get_num()]
