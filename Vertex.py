@@ -39,11 +39,15 @@ class Vertex(object):
     def get_label(self):
         return self.label
 
+    def __str__(self):
+        neighbors = [neighbor.get_lable() for neighbor in self.original_neighbors]
+        return [self.label].append(neighbors)
+
 
 class Blank(Vertex):
     def __init__(self, x, y):
         self.coordinate = [x, y]
-        self.label = "Blank_" + x + "_" + y
+        self.label = "Blank_" + str(x) + "_" + str(y)
         self.category = "Blank"
 
     def get_coor(self):

@@ -14,22 +14,22 @@ class Player(object):
         self.p_characters, self.im_characters = [], []
         self.curr_location = None  # should be a vertex
         for card in all_cards:  # put card into different categories
-            match card.category():
-                case "weapon":
-                    if card in own_card_list:
-                        self.p_weapons.append(card)
-                    else:
-                        self.im_weapons.append(card)
-                case "room":
-                    if card in own_card_list:
-                        self.p_rooms.append(card)
-                    else:
-                        self.im_rooms.append(card)
-                case "character":
-                    if card in own_card_list:
-                        self.p_characters.append(card)
-                    else:
-                        self.im_characters.append(card)
+            print(type(card))
+            if card.category() == "weapon":
+                if card in own_card_list:
+                    self.p_weapons.append(card)
+                else:
+                    self.im_weapons.append(card)
+            elif card.category() == "room":
+                if card in own_card_list:
+                    self.p_rooms.append(card)
+                else:
+                    self.im_rooms.append(card)
+            else:
+                if card in own_card_list:
+                    self.p_characters.append(card)
+                else:
+                    self.im_characters.append(card)
 
     def __lt__(self, other):
         return self.character < other.character

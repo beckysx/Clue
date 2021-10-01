@@ -1,5 +1,7 @@
 from Vertex import *
 from Card import *
+from Clue import *
+import random
 
 if __name__ == '__main__':
     room_names = {"Conservatory": [[4, 4]], "Billiard": [[0, 12], [5, 8]], "Library": [[2, 12], [6, 15]],
@@ -10,3 +12,4 @@ if __name__ == '__main__':
                        "Prof.Plum": [5, [0, 18]], "Miss.Scarlett": [0, [15, 22]],
                        "Mrs.Peacock": [4, [0, 5]]}
     weapons = ["Candlestick", "Dagger", "Lead_Pipe", "Revolver", "Rope", "Wrench"]
+    test = Clue(6, weapons, room_names, character_names)

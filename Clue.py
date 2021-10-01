@@ -24,8 +24,11 @@ class Clue(object):
                                                                  room_names)  # neighbors for all rooms
         start_vertices, blank_vertices = self.neighbors_for_starts(start_vertices, blank_vertices,
                                                                    character_names)  # neighbors for all starts
+        blank_vertices = self.neighbors_for_blanks(blank_vertices)
         V = room_vertices + start_vertices + blank_vertices
-        self.board = Board(V, players)
+        for i in range(5):
+            print(V[i])
+        #self.board = Board(V, players)
 
     def blank_exist(self, x, y):  # check blank exist, used for generate blank vertices
         if y == 0:
@@ -106,7 +109,7 @@ class Clue(object):
         return [card for card in self.all_cards if card not in self.real_answer]
 
     def distribute_cards(self, n):  # distribute fake cards to all players
-        self.fake_cards = random.shuffle(self.fake_cards)
+        random.shuffle(self.fake_cards)
         card_piles = [[] for i in range(n)]
         for i in range(len(self.fake_cards)):
             card_piles[i % n].append(self.fake_cards[i])
@@ -135,5 +138,12 @@ class Clue(object):
         return start_vertices, blank_vertices
 
     def neighbors_for_blanks(self, blank_vertices):
+        for vertex in blank_vertices:
+            coor = vertex.get_coor()
+            x, y = coor[0], coor[1]
+            check_list = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]
+            for check in check_list:
+                if self.blank_exist(check[0], check[1]):
+                    vertex.add_neighbor(self.getV(self.coor_to_label(check), blank_vertices))
 
         return blank_vertices
