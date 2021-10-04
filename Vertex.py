@@ -24,9 +24,11 @@ class Vertex(object):
 
     def occupy(self):
         self.occupied = True
+        self.copy_neighbors()
         for neighbor in self.original_neighbors:
             neighbor.copy_neighbors()
             neighbor.delete_neighbor(self)
+
 
     def de_occupy(self):
         self.occupied = False
@@ -40,12 +42,15 @@ class Vertex(object):
         return self.label
 
     def __str__(self):
-        neighbors = [neighbor.get_lable() for neighbor in self.original_neighbors]
-        return [self.label].append(neighbors)
+        text = self.label + ": "
+        for neighbor in self.current_neighbors:
+            text += neighbor.label + ", "
+        return text
 
 
 class Blank(Vertex):
     def __init__(self, x, y):
+        super().__init__()
         self.coordinate = [x, y]
         self.label = "Blank_" + str(x) + "_" + str(y)
         self.category = "Blank"
@@ -56,11 +61,13 @@ class Blank(Vertex):
 
 class GreenStart(Vertex):
     def __init__(self, char_name):
+        super().__init__()
         self.label = "Start_" + char_name
         self.category = "Start"
 
 
 class Room(Vertex):
     def __init__(self, room_name):
+        super().__init__()
         self.label = room_name
         self.category = "Room"

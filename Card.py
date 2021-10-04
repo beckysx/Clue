@@ -7,7 +7,7 @@ class Card(object):
     def __eq__(self, other):
         return self.name == other.name
 
-    def category(self):
+    def get_category(self):
         return self.category
 
     def name(self):

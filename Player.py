@@ -1,5 +1,7 @@
 from Card import *
 from Vertex import *
+import random
+
 
 class Player(object):
     def __init__(self, char_card, own_card_list, all_cards):
@@ -14,13 +16,12 @@ class Player(object):
         self.p_characters, self.im_characters = [], []
         self.curr_location = None  # should be a vertex
         for card in all_cards:  # put card into different categories
-            print(type(card))
-            if card.category() == "weapon":
+            if card.get_category() == "weapon":
                 if card in own_card_list:
                     self.p_weapons.append(card)
                 else:
                     self.im_weapons.append(card)
-            elif card.category() == "room":
+            elif card.get_category() == "room":
                 if card in own_card_list:
                     self.p_rooms.append(card)
                 else:
@@ -47,5 +48,13 @@ class Player(object):
         return self.character.get_name()
 
     def change_location(self, new_location):
+        if self.curr_location is not None:
+            self.curr_location.de_occupy()
+        new_location.occupy()
         self.curr_location = new_location
 
+    def get_curr_location(self):
+        return self.curr_location
+
+    def row_die(self):
+        return random.randint(1, 6)
