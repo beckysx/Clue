@@ -20,7 +20,10 @@ class Clue(object):
         self.players = players
         self.players_set_up()
         self.board = Board(room_names, character_names, players)
-        result = self.board.get_can_reach(0, 4)
+        result = self.board.get_can_reach(0, 2)
+        path = self.board.shortest_path()
+        for v in path:
+            print(v)
 
 
     def blank_exist(self, x, y):  # check blank exist, used for generate blank vertices

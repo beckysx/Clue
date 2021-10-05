@@ -1,3 +1,4 @@
+
 class Vertex(object):
     def __init__(self):
         self.occupied = False
