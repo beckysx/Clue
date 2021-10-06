@@ -3,6 +3,7 @@ class Card(object):
         self.category = category
         self.name = name
         self.image = image
+        self.have_shown = False
 
     def __eq__(self, other):
         return self.name == other.name
@@ -10,8 +11,22 @@ class Card(object):
     def get_category(self):
         return self.category
 
-    def name(self):
+    def get_name(self):
         return self.name
+
+    def isRoom(self):
+        return self.category == 'room'
+
+    def isWeapon(self):
+        return self.category == 'weapon'
+
+    def isChar(self):
+        return self.category == 'character'
+
+    def delete_from(self, card_list):
+        for c in card_list:
+            if self == c:
+                return card_list.remove(c)
 
 
 class Weapon(Card):

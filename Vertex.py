@@ -1,10 +1,10 @@
-
 class Vertex(object):
     def __init__(self):
         self.occupied = False
         self.original_neighbors = []
         self.current_neighbors = []
         self.label = None
+        self.category = None
 
     def add_neighbor(self, neighbor):
         if neighbor not in self.original_neighbors:
@@ -30,7 +30,6 @@ class Vertex(object):
             neighbor.copy_neighbors()
             neighbor.delete_neighbor(self)
 
-
     def de_occupy(self):
         self.occupied = False
         for neighbor in self.neighbors:
@@ -47,6 +46,11 @@ class Vertex(object):
         for neighbor in self.current_neighbors:
             text += neighbor.label + ", "
         return text
+
+    def isRoom(self):
+        return self.category == "Room"
+
+
 
 
 class Blank(Vertex):

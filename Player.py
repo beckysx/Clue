@@ -48,9 +48,8 @@ class Player(object):
         return self.character.get_name()
 
     def change_location(self, new_location):
-        if self.curr_location is not None:
-            self.curr_location.de_occupy()
-        new_location.occupy()
+        if new_location.isRoom():
+            self.can_suggest = True
         self.curr_location = new_location
 
     def get_curr_location(self):
@@ -58,3 +57,57 @@ class Player(object):
 
     def row_die(self):
         return random.randint(1, 6)
+
+    def isActive(self):
+        return self.status
+
+    def can_make_suggest(self):
+        return self.can_suggest
+
+    def only_one_combination(self):
+        return len(self.p_rooms) == 1 and len(self.p_weapons) == 1 and len(self.p_characters) == 1
+
+    def make_suggestion(self, room):
+        self.can_suggest = False
+        person = random.choice(self.p_characters)
+        weapon = random.choice(self.p_weapons)
+        self.can_suggest = False
+        return [room, person, weapon]
+
+    def have_card(self, card):
+        for c in self.cards_have:
+            if c == card:
+                return True
+        return False
+
+    def disprove(self, suggestion):
+        range = []
+        for card in suggestion:
+            if self.have_card(card):
+                range.append(card)
+        priority = []
+        if len(range) > 1:
+            for card in range:
+                if card.have_shown:
+                    priority.append(card)
+            if len(priority) > 0:
+                return [random.choice(priority)]
+        return random.choice(range) if len(range) > 0 else None
+
+    def elliminate(self, card):
+        if card.isRoom():
+            self.im_rooms.append(card)
+            self.p_rooms = card.delete_from(self.p_rooms)
+        elif card.isWeapon():
+            self.im_weapons.append(card)
+            self.p_weapons = card.delete_from(self.p_weapons)
+        elif card.isChar():
+            self.im_characters.append(card)
+            self.p_characters = card.delete_from(self.p_characters)
+
+    def make_accusation(self):
+        room = random.choice(self.p_rooms)
+        person = random.choice(self.p_characters)
+        weapon = random.choice(self.p_weapons)
+        self.status = False
+        return [room, person, weapon]

@@ -70,7 +70,6 @@ class Board(object):
         blank_vertices = self.neighbors_for_blanks(blank_vertices)
         self.vertices = np.array(room_vertices + start_vertices + blank_vertices)
         self.players = players
-        self.players_set_up()
         self.ad_matrix = None
 
     def generate_blank_vertices(self):  # generate all blank vertices
@@ -122,11 +121,6 @@ class Board(object):
                       coordinate):  # turn a length 2 list into blank vertex label, use to conveniently add neighbors
         return "Blank_" + str(coordinate[0]) + "_" + str(coordinate[1])
 
-    def players_set_up(self):
-        for player in self.players:
-            start_position = self.getV_label("Start_" + player.get_name(), self.vertices)
-            self.player_moveto_v(player, start_position)
-
     def getV_label(self, v_label, v_list):
         for v in v_list:
             if v.label == v_label:
@@ -138,11 +132,16 @@ class Board(object):
             if vertex == v:
                 return vertex
 
-    def player_moveto_index(self, i, new_location):
-        self.players[i].change_location(new_location)
+    def v_inlist(self, v, v_list):
+        for vertex in v_list:
+            if vertex == v:
+                return True
+        return False
 
-    def player_moveto_v(self, player, new_location):
-        player.change_location(new_location)
+    def player_moveto(self, old_location, new_location):
+        if old_location is not None:
+            self.getV_vertex(old_location, self.vertices).deoccupy()
+        self.getV_vertex(new_location, self.vertices).occupy()
 
     def get_v_index(self, v):
         return np.where(self.vertices == v)[0][0]
@@ -158,18 +157,18 @@ class Board(object):
         ad_matrix = sparse.csr_matrix(ad_matrix)
         self.ad_matrix = ad_matrix
 
-    def get_can_reach(self, player_i, step):  # 记得call前创建ad_matrix
-        player_curr_index = self.get_v_index(self.players[player_i].curr_location)
+    def can_reach(self, player, step):  # 记得call前创建ad_matrix
+        player_curr_index = self.get_v_index(player.curr_location)
         can_reach = self.ad_matrix.getrow(player_curr_index)
         if step > 1:
             for i in range(step - 1):
                 can_reach = can_reach.dot(self.ad_matrix)
         can_reach = can_reach.toarray()
-        result = []
+        rechable = []
         for i in range(len(can_reach[0])):
             if can_reach[0][i] != 0:
-                result.append(self.vertices[i])
-        return result
+                rechable.append(self.vertices[i])
+        return rechable
 
     def shortest_path(self, start, targets):
         # target probably is a list of string of rooms (self.p_rooms)
@@ -182,6 +181,28 @@ class Board(object):
             minPath = nx.dijkstra_path(G, source=start_i, target=room_i, weight=1)
             path_dictionary[room] = [self.vertices[minPath[i]] for i in range(1, 1, len(minPath))]
         return path_dictionary
+
+    def get_reachable_vertex(self, path_dictionary, reachable):
+        result = []
+        for k, v in path_dictionary.items():
+            for vertex in v:
+                if vertex.isRoom() and self.v_inlist(vertex, reachable):
+                    result.append(vertex)
+                    break
+                elif self.v_inlist(vertex, reachable) and not self.v_inlist(vertex, result):
+                    result.append(vertex)
+        return result
+
+    def have_secrete_pass(self, room_vertex):
+        if room_vertex.label == "Conservatory":
+            return self.getV_label("Lounge")
+        elif room_vertex.label == "Lounge":
+            return self.getV_label("Conservatory")
+        elif room_vertex.label == "Study":
+            return self.getV_label("Kitchen")
+        elif room_vertex.label == "Kitchen":
+            return self.getV_label("Study")
+        return False
 
     # def add_edge(self, vertex_from, vertex_to):
     # if isinstance(vertex_from, Vertex) and isinstance(vertex_to, Vertex):

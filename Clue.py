@@ -6,12 +6,13 @@ from Board import *
 
 class Clue(object):
     def __init__(self, n, weapons, room_names, character_names):
+        self.n = n
         room_cards = [Room_card(room_name) for room_name in room_names]
         char_cards = [Character(name=k, num=v[0]) for k, v in character_names.items()]
         weapon_cards = [Weapon(weapon) for weapon in weapons]
         # handle cards, generate players
         self.all_cards = weapon_cards + room_cards + char_cards
-        self.real_answer = [random.choice(char_cards), random.choice(weapon_cards), random.choice(room_cards)]
+        self.real_answer = [random.choice(room_cards), random.choice(char_cards), random.choice(weapon_cards)]
         random_n_characters = random.sample(char_cards, n)  # randomly choose n characters as agents
         self.fake_cards = self.get_fake_cards()
         card_piles = self.distribute_cards(n)
@@ -20,11 +21,7 @@ class Clue(object):
         self.players = players
         self.players_set_up()
         self.board = Board(room_names, character_names, players)
-        result = self.board.get_can_reach(0, 2)
-        path = self.board.shortest_path()
-        for v in path:
-            print(v)
-
+        self.status = True  # no one win
 
     def blank_exist(self, x, y):  # check blank exist, used for generate blank vertices
         if x < 0 or x > 21 or y < 0 or y > 22:
@@ -109,3 +106,52 @@ class Clue(object):
                 order_in_game = self.players.index(player)
                 if player.get_num() != order_in_game:
                     player.change_num(order_in_game)
+                start_position = self.board.getV_label("Start_" + player.get_name(), self.board.vertices)
+                player.change_location(start_position)
+                self.board.player_moveto(None, start_position)
+
+    def game_over(self, combination):  # match the accusation with real answer
+        for i in range(3):
+            if combination[1] != self.real_answer[i]:
+                return False
+        return True
+
+    def find_card(self, card_label):
+        for card in self.all_cards:
+            if card.get_label() == card_label:
+                return card
+
+    def seggestion_move(self, suggestion):
+        room_name = suggestion[0].get_name()
+        for player in self.players:
+            if player.character == suggestion[1] and player.curr_location.get_label != room_name:
+                new_location = self.board.getV_label(room_name, self.board.vertices)
+                self.board.player_moveto(player.curr_location, new_location)
+                player.change_location(new_location)
+
+    def disprove_process(self, i, suggestion):
+        for x in range(i + 1, 1, i + self.n):
+            player_i = x % self.n
+            card = self.players[player_i].disprove(suggestion)
+            if card is not None:
+                return card
+        return None
+
+    def one_turn(self):
+        for player in self.players:
+            curr_place = player.curr_location
+            if not player.isActive():
+                continue
+            # 四个选择[stay make suggestion, secrete pass, accusation, dice]
+            elif player.only_one_combination():
+                accusation = player.make_accusation()
+                if self.game_over(accusation):
+                    self.status = False
+                    return
+            elif player.can_make_suggest():
+                room_card = self.find_card(curr_place.get_label())
+                seggestion = player.make_suggestion(room_card)
+
+            elif curr_place.isRoom():
+                secrete_pass = self.board.have_secrete_pass()
+            self.seggestion_move(seggestion)
