@@ -97,7 +97,7 @@ class Clue(object):
     def generate_players(self, char_list, card_piles):  # generate all players
         player_list = []
         for i in range(len(char_list)):
-            player_list.append(Player(char_list[i], card_piles[i], self.all_cards))
+            player_list.append(Player(char_list[i], card_piles[i], self.all_cards, self.n))
         return player_list
 
     def players_set_up(self):
@@ -106,14 +106,14 @@ class Clue(object):
                 order_in_game = self.players.index(player)
                 if player.get_num() != order_in_game:
                     player.change_num(order_in_game)
-                start_position = self.board.getV_label("Start_" + player.get_name(), self.board.vertices)
-                player.change_location(start_position)
-                self.board.player_moveto(None, start_position)
+                self.player_move_to(player, "Start_" + player.get_name())
+                player.player_card_records[player.get_num()] = player.cards_have
 
-    def game_over(self, combination):  # match the accusation with real answer
+    def answer_check(self, combination):  # match the accusation with real answer
         for i in range(3):
             if combination[1] != self.real_answer[i]:
                 return False
+        self.status = False
         return True
 
     def find_card(self, card_label):
@@ -121,21 +121,28 @@ class Clue(object):
             if card.get_label() == card_label:
                 return card
 
-    def seggestion_move(self, suggestion):
+    def player_move_to(self, player, position_name):
+        current_position = player.curr_location
+        new_position = self.board.getV_label(position_name, self.board.vertices)
+        player.move_to(new_position)
+        self.board.player_moveto(current_position, new_position)
+
+    def seggestion_move(self, suggestion):   # suggestion = [room, person, weapon]
         room_name = suggestion[0].get_name()
         for player in self.players:
             if player.character == suggestion[1] and player.curr_location.get_label != room_name:
-                new_location = self.board.getV_label(room_name, self.board.vertices)
-                self.board.player_moveto(player.curr_location, new_location)
-                player.change_location(new_location)
+                self.player_move_to(player, room_name)
 
-    def disprove_process(self, i, suggestion):
+    def disprove_process(self, player, suggestion):
+        i = player.get_num()
         for x in range(i + 1, 1, i + self.n):
             player_i = x % self.n
             card = self.players[player_i].disprove(suggestion)
             if card is not None:
-                return card
-        return None
+                self.players[i].elliminate(card, self.players[player_i])
+
+    def row_die(self):
+        return random.randint(1, 6)
 
     def one_turn(self):
         for player in self.players:
@@ -143,15 +150,29 @@ class Clue(object):
             if not player.isActive():
                 continue
             # 四个选择[stay make suggestion, secrete pass, accusation, dice]
-            elif player.only_one_combination():
+            elif player.only_one_combination():  # make accusation
                 accusation = player.make_accusation()
-                if self.game_over(accusation):
+                if self.answer_check(accusation):
                     self.status = False
                     return
-            elif player.can_make_suggest():
+            elif player.can_make_suggest():  # make suggestion
                 room_card = self.find_card(curr_place.get_label())
-                seggestion = player.make_suggestion(room_card)
+                suggestion = player.make_suggestion(room_card)  # suggestion = [room, person, weapon]
 
-            elif curr_place.isRoom():
-                secrete_pass = self.board.have_secrete_pass()
-            self.seggestion_move(seggestion)
+            elif curr_place.isRoom():  # use secrete pass, give suggestion
+                secrete_pass = self.board.have_secrete_pass(curr_place).get_label()
+                if player.is_p_room(secrete_pass):
+                    self.player_move_to(player, secrete_pass)
+                room_card = self.find_card(curr_place.get_label())
+                suggestion = player.make_suggestion(room_card)
+            else:  # use dice, if a room give suggestion
+                step = self.row_die()
+                reachable_vertices = self.board.get_reachable_vertex(self, player, step)
+
+            self.seggestion_move(suggestion)
+            self.disprove_process(player, suggestion)
+            if player.only_one_combination():  # make accusation
+                accusation = player.make_accusation()
+                if self.answer_check(accusation):
+                    self.status = False
+                    return

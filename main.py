@@ -12,4 +12,6 @@ if __name__ == '__main__':
                        "Prof.Plum": [5, [0, 18]], "Miss.Scarlett": [0, [15, 22]],
                        "Mrs.Peacock": [4, [0, 5]]}
     weapons = ["Candlestick", "Dagger", "Lead_Pipe", "Revolver", "Rope", "Wrench"]
-    test = Clue(6, weapons, room_names, character_names)
+    test = Clue(3, weapons, room_names, character_names)
+    while test.status:
+        test.one_turn()

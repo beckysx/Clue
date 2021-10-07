@@ -4,7 +4,7 @@ import random
 
 
 class Player(object):
-    def __init__(self, char_card, own_card_list, all_cards):
+    def __init__(self, char_card, own_card_list, all_cards, n):
         self.character = char_card
         self.status = True  # active
         self.in_room = False  # 使用v label检查
@@ -15,6 +15,7 @@ class Player(object):
         self.p_rooms, self.im_rooms = [], []
         self.p_characters, self.im_characters = [], []
         self.curr_location = None  # should be a vertex
+        self.player_card_records = [[] for i in range(n)]
         for card in all_cards:  # put card into different categories
             if card.get_category() == "weapon":
                 if card in own_card_list:
@@ -47,16 +48,10 @@ class Player(object):
     def get_name(self):
         return self.character.get_name()
 
-    def change_location(self, new_location):
+    def move_to(self, new_location):
         if new_location.isRoom():
             self.can_suggest = True
         self.curr_location = new_location
-
-    def get_curr_location(self):
-        return self.curr_location
-
-    def row_die(self):
-        return random.randint(1, 6)
 
     def isActive(self):
         return self.status
@@ -74,9 +69,15 @@ class Player(object):
         self.can_suggest = False
         return [room, person, weapon]
 
-    def have_card(self, card):
+    def have_card_c(self, card):
         for c in self.cards_have:
             if c == card:
+                return True
+        return False
+
+    def is_p_room(self, room_name):
+        for card in self.p_rooms:
+            if card.get_name() == room_name:
                 return True
         return False
 
@@ -94,7 +95,7 @@ class Player(object):
                 return [random.choice(priority)]
         return random.choice(range) if len(range) > 0 else None
 
-    def elliminate(self, card):
+    def elliminate(self, card, card_owner):
         if card.isRoom():
             self.im_rooms.append(card)
             self.p_rooms = card.delete_from(self.p_rooms)
@@ -104,6 +105,8 @@ class Player(object):
         elif card.isChar():
             self.im_characters.append(card)
             self.p_characters = card.delete_from(self.p_characters)
+        self.player_card_records[card_owner.get_num()].append(card)
+
 
     def make_accusation(self):
         room = random.choice(self.p_rooms)

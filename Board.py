@@ -182,7 +182,10 @@ class Board(object):
             path_dictionary[room] = [self.vertices[minPath[i]] for i in range(1, 1, len(minPath))]
         return path_dictionary
 
-    def get_reachable_vertex(self, path_dictionary, reachable):
+    def get_reachable_vertex(self, player, step):
+        self.create_adjacency_matrix()
+        reachable = self.can_reach(player, step)
+        path_dictionary = self.shortest_path(player.curr_location, player.p_rooms)
         result = []
         for k, v in path_dictionary.items():
             for vertex in v:
