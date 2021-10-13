@@ -12,6 +12,8 @@ class Clue(object):
         weapon_cards = [Weapon(weapon) for weapon in weapons]
         # handle cards, generate players
         self.all_cards = weapon_cards + room_cards + char_cards
+        card_labels = [card.get_name() for card in self.all_cards]
+        self.num_cards_records = dict.fromkeys(card_labels, 0)
         self.real_answer = [random.choice(room_cards), random.choice(char_cards), random.choice(weapon_cards)]
         random_n_characters = random.sample(char_cards, n)  # randomly choose n characters as agents
         self.fake_cards = self.get_fake_cards()
@@ -127,7 +129,7 @@ class Clue(object):
         player.move_to(new_position)
         self.board.player_moveto(current_position, new_position)
 
-    def seggestion_move(self, suggestion):   # suggestion = [room, person, weapon]
+    def seggestion_move(self, suggestion):  # suggestion = [room, person, weapon]
         room_name = suggestion[0].get_name()
         for player in self.players:
             if player.character == suggestion[1] and player.curr_location.get_label != room_name:
@@ -143,6 +145,11 @@ class Clue(object):
 
     def row_die(self):
         return random.randint(1, 6)
+
+    def update_records(self, suggestion):  # add number of times mentioned by player for each card
+        card_names = [card.get_name() for card in suggestion]
+        for card_name in card_names:
+            self.num_cards_records[card_name] = self.num_cards_records[card_name] + 1
 
     def one_turn(self):
         for player in self.players:
@@ -167,8 +174,20 @@ class Clue(object):
                 suggestion = player.make_suggestion(room_card)
             else:  # use dice, if a room give suggestion
                 step = self.row_die()
-                reachable_vertices = self.board.get_reachable_vertex(self, player, step)
-
+                reachable_vertices, sorted_rooms = self.board.get_reachable_vertex(self, player, step)
+                for room in sorted_rooms:
+                    if player.is_p_room(room.get_name()):
+                        new_position = reachable_vertices[room.get_name()]
+                        if new_position is not None:
+                            self.player_move_to(player, new_position.get_label())
+                            break
+                if player.curr_location.isRoom(): # new position is not room
+                    room_card = self.find_card(curr_place.get_label())
+                    suggestion = player.make_suggestion(room_card)
+                else:
+                    continue
+            # records num of times mentioned in suggestion
+            self.update_records(suggestion)
             self.seggestion_move(suggestion)
             self.disprove_process(player, suggestion)
             if player.only_one_combination():  # make accusation

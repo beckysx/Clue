@@ -1,6 +1,7 @@
 from Card import *
 from Vertex import *
 import random
+import math
 
 
 class Player(object):
@@ -11,6 +12,7 @@ class Player(object):
         self.can_rowdice = True  # block can't rowdice
         self.can_suggest = False  # self.in_room 控制
         self.cards_have = own_card_list
+        self.all_rooms = []
         self.p_weapons, self.im_weapons = [], []
         self.p_rooms, self.im_rooms = [], []
         self.p_characters, self.im_characters = [], []
@@ -23,6 +25,7 @@ class Player(object):
                 else:
                     self.im_weapons.append(card)
             elif card.get_category() == "room":
+                self.all_rooms.append(card)
                 if card in own_card_list:
                     self.p_rooms.append(card)
                 else:
@@ -107,10 +110,17 @@ class Player(object):
             self.p_characters = card.delete_from(self.p_characters)
         self.player_card_records[card_owner.get_num()].append(card)
 
-
     def make_accusation(self):
         room = random.choice(self.p_rooms)
         person = random.choice(self.p_characters)
         weapon = random.choice(self.p_weapons)
         self.status = False
         return [room, person, weapon]
+
+    def update_room_distance(self, path_dict):
+        for k, v in path_dict.items():
+            for room_card in self.all_rooms:
+                if room_card == k:
+                    room_card.distance == v[1]
+        self.rooms.sort()
+        return self.rooms

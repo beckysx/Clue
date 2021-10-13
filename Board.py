@@ -69,6 +69,7 @@ class Board(object):
                                                                    character_names)  # neighbors for all starts
         blank_vertices = self.neighbors_for_blanks(blank_vertices)
         self.vertices = np.array(room_vertices + start_vertices + blank_vertices)
+        self.room_vertices = room_vertices
         self.players = players
         self.ad_matrix = None
 
@@ -171,7 +172,7 @@ class Board(object):
         return rechable
 
     def shortest_path(self, start, targets):
-        # target probably is a list of string of rooms (self.p_rooms)
+        # target is a list of room cards (self.rooms)
         # 记得call前创建ad_matrix
         G = nx.from_numpy_array(self.ad_matrix)
         start_i = self.get_v_index(start)
@@ -179,22 +180,26 @@ class Board(object):
         for room in targets:
             room_i = self.get_v_index(self.getV_label(room))
             minPath = nx.dijkstra_path(G, source=start_i, target=room_i, weight=1)
-            path_dictionary[room] = [self.vertices[minPath[i]] for i in range(1, 1, len(minPath))]
+            path_dictionary[room] = [self.vertices[minPath[i]] for i in range(0, 1, len(minPath))]
+            path_dictionary[room] = [path_dictionary[room], len(path_dictionary[room]) - 1]
         return path_dictionary
 
     def get_reachable_vertex(self, player, step):
         self.create_adjacency_matrix()
         reachable = self.can_reach(player, step)
-        path_dictionary = self.shortest_path(player.curr_location, player.p_rooms)
-        result = []
+        path_dictionary = self.shortest_path(player.curr_location, player.all_rooms)
+        sorted_rooms = player.update_room_distance(path_dictionary)
+        result = {}
+        for room in player.all_rooms:
+            result[room.get_name()] = None
         for k, v in path_dictionary.items():
-            for vertex in v:
+            for vertex in v[0]:
                 if vertex.isRoom() and self.v_inlist(vertex, reachable):
-                    result.append(vertex)
+                    result[k] = vertex
                     break
-                elif self.v_inlist(vertex, reachable) and not self.v_inlist(vertex, result):
-                    result.append(vertex)
-        return result
+                elif self.v_inlist(vertex, reachable):
+                    result[k] = vertex
+        return result, sorted_rooms
 
     def have_secrete_pass(self, room_vertex):
         if room_vertex.label == "Conservatory":
@@ -206,15 +211,3 @@ class Board(object):
         elif room_vertex.label == "Kitchen":
             return self.getV_label("Study")
         return False
-
-    # def add_edge(self, vertex_from, vertex_to):
-    # if isinstance(vertex_from, Vertex) and isinstance(vertex_to, Vertex):
-    # vertex_from.add_neighbor(vertex_to)
-
-    # if isinstance(vertex_from, Vertex) and isinstance(vertex_to, Vertex):
-    # self.vertices[vertex_from.coordinate] = vertex_from.neighbors
-    # self.vertices[vertex_to.coordinate] = vertex_to.neighbors
-
-    # def add_edges(self, edges):
-    # for edge in edges:
-    # self.add_edge(edge[0], edge[1])

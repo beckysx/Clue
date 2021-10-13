@@ -51,8 +51,6 @@ class Vertex(object):
         return self.category == "Room"
 
 
-
-
 class Blank(Vertex):
     def __init__(self, x, y):
         super().__init__()
@@ -76,3 +74,5 @@ class Room(Vertex):
         super().__init__()
         self.label = room_name
         self.category = "Room"
+
+

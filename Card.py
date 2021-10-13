@@ -1,3 +1,4 @@
+import math
 class Card(object):
     def __init__(self, category, name, image):
         self.category = category
@@ -61,3 +62,7 @@ class Room_card(Card):
         self.category = 'room'
         self.name = name
         self.image = image
+        self.distance = math.inf
+
+    def __lt__(self, other):
+        return self.distance < other.distance
