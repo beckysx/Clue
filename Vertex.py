@@ -32,7 +32,7 @@ class Vertex(object):
 
     def de_occupy(self):
         self.occupied = False
-        for neighbor in self.neighbors:
+        for neighbor in self.original_neighbors:
             neighbor.copy_neighbors()
 
     def __eq__(self, other):

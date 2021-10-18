@@ -12,17 +12,22 @@ class Clue(object):
         weapon_cards = [Weapon(weapon) for weapon in weapons]
         # handle cards, generate players
         self.all_cards = weapon_cards + room_cards + char_cards
-        card_labels = [card.get_name() for card in self.all_cards]
+        self.room_cards = room_cards
+        card_labels = self.cardlist_to_label(self.all_cards)
         self.num_cards_records = dict.fromkeys(card_labels, 0)
         self.real_answer = [random.choice(room_cards), random.choice(char_cards), random.choice(weapon_cards)]
+        print("real answer:")
+        self.print_cardlist(self.real_answer)
         random_n_characters = random.sample(char_cards, n)  # randomly choose n characters as agents
         self.fake_cards = self.get_fake_cards()
         card_piles = self.distribute_cards(n)
         players = self.generate_players(random_n_characters, card_piles)
         players.sort()
         self.players = players
-        self.players_set_up()
+        print("players:")
+        self.print_cardlist(self.players)
         self.board = Board(room_names, character_names, players)
+        self.players_set_up()
         self.status = True  # no one win
 
     def blank_exist(self, x, y):  # check blank exist, used for generate blank vertices
@@ -111,16 +116,24 @@ class Clue(object):
                 self.player_move_to(player, "Start_" + player.get_name())
                 player.player_card_records[player.get_num()] = player.cards_have
 
+    def accusation_process(self,player,combination):
+        if self.answer_check(combination):
+            print(str(player) + " win")
+            self.status = False
+            return True
+        print(str(player) + " lost")
+        return False
+
     def answer_check(self, combination):  # match the accusation with real answer
         for i in range(3):
-            if combination[1] != self.real_answer[i]:
+            if combination[i].name != self.real_answer[i].name:
                 return False
         self.status = False
         return True
 
-    def find_card(self, card_label):
-        for card in self.all_cards:
-            if card.get_label() == card_label:
+    def find_room_card(self, card_label):
+        for card in self.room_cards:
+            if card.name == card_label:
                 return card
 
     def player_move_to(self, player, position_name):
@@ -137,11 +150,15 @@ class Clue(object):
 
     def disprove_process(self, player, suggestion):
         i = player.get_num()
-        for x in range(i + 1, 1, i + self.n):
+        for x in range(i + 1, i + self.n):
             player_i = x % self.n
             card = self.players[player_i].disprove(suggestion)
+            print(self.players[player_i].get_name()+" show "+ player.get_name() + str(card))
             if card is not None:
                 self.players[i].elliminate(card, self.players[player_i])
+                return True
+        return False
+
 
     def row_die(self):
         return random.randint(1, 6)
@@ -153,45 +170,69 @@ class Clue(object):
 
     def one_turn(self):
         for player in self.players:
+            print(player.character.name + "'s turn:")
             curr_place = player.curr_location
+            secrete_pass = self.board.have_secrete_pass(curr_place)
             if not player.isActive():
                 continue
             # 四个选择[stay make suggestion, secrete pass, accusation, dice]
             elif player.only_one_combination():  # make accusation
                 accusation = player.make_accusation()
-                if self.answer_check(accusation):
-                    self.status = False
+                print("Accusation: ")
+                self.print_cardlist(accusation)
+                if self.accusation_process(player,accusation):
                     return
             elif player.can_make_suggest():  # make suggestion
-                room_card = self.find_card(curr_place.get_label())
+                room_card = self.find_room_card(curr_place.get_label())
                 suggestion = player.make_suggestion(room_card)  # suggestion = [room, person, weapon]
 
-            elif curr_place.isRoom():  # use secrete pass, give suggestion
-                secrete_pass = self.board.have_secrete_pass(curr_place).get_label()
-                if player.is_p_room(secrete_pass):
-                    self.player_move_to(player, secrete_pass)
-                room_card = self.find_card(curr_place.get_label())
+            elif player.is_p_room(secrete_pass):  # use secrete pass, give suggestion
+                self.player_move_to(player, secrete_pass)
+                room_card = self.find_room_card(curr_place.get_label())
                 suggestion = player.make_suggestion(room_card)
             else:  # use dice, if a room give suggestion
                 step = self.row_die()
-                reachable_vertices, sorted_rooms = self.board.get_reachable_vertex(self, player, step)
+                print("row die get:" + str(step) + " steps")
+                reachable_vertices, sorted_rooms = self.board.get_reachable_vertex(player, step)
                 for room in sorted_rooms:
                     if player.is_p_room(room.get_name()):
                         new_position = reachable_vertices[room.get_name()]
                         if new_position is not None:
                             self.player_move_to(player, new_position.get_label())
                             break
-                if player.curr_location.isRoom(): # new position is not room
-                    room_card = self.find_card(curr_place.get_label())
+
+                if player.curr_location.isRoom():  # new position is room
+                    room_card = self.find_room_card(player.curr_location.get_label())
                     suggestion = player.make_suggestion(room_card)
-                else:
+                else:  # new position not room
+                    print("move to blank")
                     continue
             # records num of times mentioned in suggestion
+            print("real answer:")
+            self.print_cardlist(self.real_answer)
+            print("suggestion:")
+            self.print_cardlist(suggestion)
             self.update_records(suggestion)
             self.seggestion_move(suggestion)
-            self.disprove_process(player, suggestion)
-            if player.only_one_combination():  # make accusation
-                accusation = player.make_accusation()
-                if self.answer_check(accusation):
-                    self.status = False
+            disprove = self.disprove_process(player, suggestion)
+            if disprove:
+                if player.only_one_combination():  # make accusation
+                    accusation = player.make_accusation()
+                    print("Accusation: ")
+                    self.print_cardlist(accusation)
+                    if self.accusation_process(player, accusation):
+                        return
+            else:
+                accusation = player.make_accusation(suggestion)
+                print("Accusation: ")
+                self.print_cardlist(accusation)
+                if self.accusation_process(player, accusation):
                     return
+
+
+    def cardlist_to_label(self, card_list):
+        return [card.get_name() for card in card_list]
+
+    def print_cardlist(self, card_list):
+        print(*card_list, sep=", ")
+

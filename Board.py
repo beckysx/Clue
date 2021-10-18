@@ -141,7 +141,7 @@ class Board(object):
 
     def player_moveto(self, old_location, new_location):
         if old_location is not None:
-            self.getV_vertex(old_location, self.vertices).deoccupy()
+            self.getV_vertex(old_location, self.vertices).de_occupy()
         self.getV_vertex(new_location, self.vertices).occupy()
 
     def get_v_index(self, v):
@@ -174,14 +174,16 @@ class Board(object):
     def shortest_path(self, start, targets):
         # target is a list of room cards (self.rooms)
         # 记得call前创建ad_matrix
+        target_labels = self.cardlist_to_labels(targets)
         G = nx.from_numpy_array(self.ad_matrix)
         start_i = self.get_v_index(start)
-        path_dictionary = dict.fromkeys(targets, [])
-        for room in targets:
-            room_i = self.get_v_index(self.getV_label(room))
+        path_dictionary = dict.fromkeys(target_labels, [])
+        for room_name in target_labels:
+            room_vertex = self.getV_label(room_name, self.room_vertices)
+            room_i = self.get_v_index(room_vertex)
             minPath = nx.dijkstra_path(G, source=start_i, target=room_i, weight=1)
-            path_dictionary[room] = [self.vertices[minPath[i]] for i in range(0, 1, len(minPath))]
-            path_dictionary[room] = [path_dictionary[room], len(path_dictionary[room]) - 1]
+            path_dictionary[room_name] = [self.vertices[minPath[i]] for i in range(1, len(minPath))]
+            path_dictionary[room_name] = [path_dictionary[room_name], len(path_dictionary[room_name])]
         return path_dictionary
 
     def get_reachable_vertex(self, player, step):
@@ -203,11 +205,22 @@ class Board(object):
 
     def have_secrete_pass(self, room_vertex):
         if room_vertex.label == "Conservatory":
-            return self.getV_label("Lounge")
+            return "Lounge"
         elif room_vertex.label == "Lounge":
-            return self.getV_label("Conservatory")
+            return "Conservatory"
         elif room_vertex.label == "Study":
-            return self.getV_label("Kitchen")
+            return "Kitchen"
         elif room_vertex.label == "Kitchen":
-            return self.getV_label("Study")
-        return False
+            return "Study"
+        return None
+
+    def cardlist_to_labels(self, card_list):
+        return [card.get_name() for card in card_list]
+
+    def label_list_to_cards(self, label_list, card_list):
+        result = []
+        for label in label_list:
+            for card in card_list:
+                if card.get_name == label:
+                    result.append(card)
+        return result

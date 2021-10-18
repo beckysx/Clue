@@ -13,5 +13,9 @@ if __name__ == '__main__':
                        "Mrs.Peacock": [4, [0, 5]]}
     weapons = ["Candlestick", "Dagger", "Lead_Pipe", "Revolver", "Rope", "Wrench"]
     test = Clue(3, weapons, room_names, character_names)
+    turn = 0
     while test.status:
+        turn +=1
+        print("TURN: " + str(turn))
         test.one_turn()
+

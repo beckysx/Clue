@@ -1,7 +1,9 @@
 import math
+
+
 class Card(object):
-    def __init__(self, category, name, image):
-        self.category = category
+    def __init__(self, name, image):
+        self.category = None
         self.name = name
         self.image = image
         self.have_shown = False
@@ -26,22 +28,25 @@ class Card(object):
 
     def delete_from(self, card_list):
         for c in card_list:
-            if self == c:
-                return card_list.remove(c)
+            if self.name == c.name:
+                card_list.remove(c)
+                return card_list
+        return card_list
+
+    def __str__(self):
+        return self.name
 
 
 class Weapon(Card):
     def __init__(self, name, image=None):
+        super().__init__(name,image)
         self.category = 'weapon'
-        self.name = name
-        self.image = image
 
 
 class Character(Card):
     def __init__(self, name, num, image=None):
+        super().__init__(name,image)
         self.category = 'character'
-        self.name = name
-        self.image = image
         self.num = num
 
     def __lt__(self, other):
@@ -59,9 +64,8 @@ class Character(Card):
 
 class Room_card(Card):
     def __init__(self, name, image=None):
+        super().__init__(name,image)
         self.category = 'room'
-        self.name = name
-        self.image = image
         self.distance = math.inf
 
     def __lt__(self, other):
