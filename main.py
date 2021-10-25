@@ -11,11 +11,10 @@ if __name__ == '__main__':
     character_names = {"Mr.Green": [3, [8, 0]], "Mrs.White": [2, [13, 0]], "Col.Mustard": [1, [21, 16]],
                        "Prof.Plum": [5, [0, 18]], "Miss.Scarlett": [0, [15, 22]],
                        "Mrs.Peacock": [4, [0, 5]]}
-    weapons = ["Candlestick", "Dagger", "Lead_Pipe", "Revolver", "Rope", "Wrench"]
+    weapons = {"Candlestick":0, "Dagger":1, "Lead_Pipe":2, "Revolver":3, "Rope":4, "Wrench":5}
     test = Clue(3, weapons, room_names, character_names)
     turn = 0
     while test.status:
-        turn +=1
+        turn += 1
         print("TURN: " + str(turn))
         test.one_turn()
-
