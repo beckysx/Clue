@@ -5,8 +5,9 @@ import math
 
 
 class Player(object):
-    def __init__(self, char_card, own_card_list, all_cards, n):
+    def __init__(self, char_card, own_card_list):
         self.character = char_card
+        self.num = 0
         self.status = True  # active
         self.in_room = False  # 使用v label检查
         self.can_rowdice = True  # block can't rowdice
@@ -17,33 +18,51 @@ class Player(object):
         self.p_rooms, self.im_rooms = [], []
         self.p_characters, self.im_characters = [], []
         self.curr_location = None  # should be a vertex
-        self.player_card_records = [[] for i in range(n)]
-        for card in all_cards:  # put card into different categories
+        self.room_p_table = [[0 for i in range(8)] for i in range(9)]  # 0~5 players, 6 distance, 7 time records
+        self.weapon_p_table = [[0 for i in range(7)] for i in range(6)]  # 0~5 players, 6 time records
+        self.character_p_table = [[0 for i in range(7)] for i in range(6)]  # 0~5 players, 6 time records
+
+    def player_set_up(self, all_cards, n):
+        p = 1 / (n - 1)
+        i = self.get_num()
+        for card in all_cards:  # put card into different categories, initiate posibility tables
             if card.get_category() == "weapon":
-                if card in own_card_list:
+                if card in self.cards_have:
                     self.im_weapons.append(card)
+                    self.weapon_p_table[card.num][i] = 1
                 else:
                     self.p_weapons.append(card)
+                    for index in range(n):
+                        if index != i:
+                            self.weapon_p_table[card.num][index] = p
             elif card.get_category() == "room":
                 self.all_rooms.append(card)
-                if card in own_card_list:
+                if card in self.cards_have:
                     self.im_rooms.append(card)
+                    self.room_p_table[card.num][i] = 1
                 else:
                     self.p_rooms.append(card)
-            else:
-                if card in own_card_list:
+                    for index in range(n):
+                        if index != i:
+                            self.room_p_table[card.num][index] = p
+            else:  # character card
+                if card in self.cards_have:
                     self.im_characters.append(card)
+                    self.character_p_table[card.num][i] = 1
                 else:
                     self.p_characters.append(card)
+                    for index in range(n):
+                        if index != i:
+                            self.character_p_table[card.num][index] = p
 
     def __lt__(self, other):
         return self.character < other.character
 
     def change_num(self, num):
-        self.character.change_num(num)
+        self.num = num
 
     def get_num(self):
-        return self.character.get_num()
+        return self.num
 
     def get_character(self):
         return self.character
@@ -121,7 +140,6 @@ class Player(object):
             self.p_characters = card.delete_from(self.p_characters)
             print("after delete from")
             print(*self.p_characters, sep=",")
-        self.player_card_records[card_owner.get_num()].append(card)
 
     def make_accusation(self, suggestion=None):
         self.status = False
@@ -139,6 +157,15 @@ class Player(object):
                     room_card.distance == v[1]
         self.all_rooms.sort()
         return self.all_rooms
+
+    def suggestion_update(self, suggestion, suggestor):  # suggestion = [room, person, weapon]
+        suggestor_i = suggestor.num
+        self.room_p_table[suggestion[0].num][7] += 1
+        self.room_p_table[suggestion[0].num][suggestor_i] = 0
+        self.character_p_table[suggestion[1].num][6] += 1
+        self.character_p_table[suggestion[1].num][suggestor_i] = 0
+        self.weapon_p_table[suggestion[2].num][6] += 1
+        self.weapon_p_table[suggestion[2].num][suggestor_i] = 0
 
     def __str__(self):
         return self.character.get_name()
