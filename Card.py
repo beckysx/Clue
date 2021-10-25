@@ -2,11 +2,12 @@ import math
 
 
 class Card(object):
-    def __init__(self, name, image):
+    def __init__(self, name, num, image):
         self.category = None
         self.name = name
         self.image = image
         self.have_shown = False
+        self.num = num
 
     def __eq__(self, other):
         return self.name == other.name
@@ -38,33 +39,26 @@ class Card(object):
 
 
 class Weapon(Card):
-    def __init__(self, name, image=None):
-        super().__init__(name,image)
+    def __init__(self, name, num, image=None):
+        super().__init__(name, num, image)
         self.category = 'weapon'
 
 
 class Character(Card):
     def __init__(self, name, num, image=None):
-        super().__init__(name,image)
+        super().__init__(name, num, image)
         self.category = 'character'
-        self.num = num
 
     def __lt__(self, other):
         return self.num < other.num
 
-    def change_num(self, num):
-        self.num = num
-
     def get_num(self):
         return self.num
 
-    def get_name(self):
-        return self.name
-
 
 class Room_card(Card):
-    def __init__(self, name, image=None):
-        super().__init__(name,image)
+    def __init__(self, name, num, image=None):
+        super().__init__(name, num, image)
         self.category = 'room'
         self.distance = math.inf
 
