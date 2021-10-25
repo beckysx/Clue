@@ -74,5 +74,3 @@ class Room(Vertex):
         super().__init__()
         self.label = room_name
         self.category = "Room"
-
-

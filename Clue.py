@@ -7,14 +7,11 @@ from Board import *
 class Clue(object):
     def __init__(self, n, weapons, room_names, character_names):
         self.n = n
-        room_cards = [Room_card(room_name) for room_name in room_names]
-        char_cards = [Character(name=k, num=v[0]) for k, v in character_names.items()]
-        weapon_cards = [Weapon(weapon) for weapon in weapons]
+        room_cards, char_cards, weapon_cards = self.set_up_cards(weapons, room_names, character_names)
+
         # handle cards, generate players
         self.all_cards = weapon_cards + room_cards + char_cards
         self.room_cards = room_cards
-        card_labels = self.cardlist_to_label(self.all_cards)
-        self.num_cards_records = dict.fromkeys(card_labels, 0)
         self.real_answer = [random.choice(room_cards), random.choice(char_cards), random.choice(weapon_cards)]
         print("real answer:")
         self.print_cardlist(self.real_answer)
@@ -22,13 +19,22 @@ class Clue(object):
         self.fake_cards = self.get_fake_cards()
         card_piles = self.distribute_cards(n)
         players = self.generate_players(random_n_characters, card_piles)
-        players.sort()
         self.players = players
         print("players:")
         self.print_cardlist(self.players)
         self.board = Board(room_names, character_names, players)
         self.players_set_up()
         self.status = True  # no one win
+
+    def set_up_cards(self, weapons, room_names, char_names):
+        char_cards = [Character(name=k, num=v[0]) for k, v in char_names.items()]
+        weapon_cards = [Weapon(name=k, num=v) for k, v in weapons]
+        room_cards = []
+        i = 0
+        for room_name in room_names:
+            room_cards.append(Room_card(name=room_name, num=i))
+            i += 1
+        return room_cards, char_cards, weapon_cards
 
     def blank_exist(self, x, y):  # check blank exist, used for generate blank vertices
         if x < 0 or x > 21 or y < 0 or y > 22:
@@ -104,19 +110,19 @@ class Clue(object):
     def generate_players(self, char_list, card_piles):  # generate all players
         player_list = []
         for i in range(len(char_list)):
-            player_list.append(Player(char_list[i], card_piles[i], self.all_cards, self.n))
+            player_list.append(Player(char_list[i], card_piles[i]))
+        player_list.sort()
         return player_list
 
     def players_set_up(self):
         if len(self.players) < 6:
             for player in self.players:
                 order_in_game = self.players.index(player)
-                if player.get_num() != order_in_game:
-                    player.change_num(order_in_game)
+                player.change_num(order_in_game)
                 self.player_move_to(player, "Start_" + player.get_name())
-                player.player_card_records[player.get_num()] = player.cards_have
+                player.player_set_up(self.all_cards, self.n)
 
-    def accusation_process(self,player,combination):
+    def accusation_process(self, player, combination):
         if self.answer_check(combination):
             print(str(player) + " win")
             self.status = False
@@ -153,20 +159,18 @@ class Clue(object):
         for x in range(i + 1, i + self.n):
             player_i = x % self.n
             card = self.players[player_i].disprove(suggestion)
-            print(self.players[player_i].get_name()+" show "+ player.get_name() + str(card))
+            print(self.players[player_i].get_name() + " show " + player.get_name() + str(card))
             if card is not None:
                 self.players[i].elliminate(card, self.players[player_i])
                 return True
         return False
 
-
     def row_die(self):
         return random.randint(1, 6)
 
-    def update_records(self, suggestion):  # add number of times mentioned by player for each card
-        card_names = [card.get_name() for card in suggestion]
-        for card_name in card_names:
-            self.num_cards_records[card_name] = self.num_cards_records[card_name] + 1
+    def suggestion_update(self, suggestion, suggestor):  # add number of times mentioned by player for each card
+        for player in self.players:
+            player.suggestion_update(suggestion, suggestor)
 
     def one_turn(self):
         for player in self.players:
@@ -180,7 +184,7 @@ class Clue(object):
                 accusation = player.make_accusation()
                 print("Accusation: ")
                 self.print_cardlist(accusation)
-                if self.accusation_process(player,accusation):
+                if self.accusation_process(player, accusation):
                     return
             elif player.can_make_suggest():  # make suggestion
                 room_card = self.find_room_card(curr_place.get_label())
@@ -212,27 +216,27 @@ class Clue(object):
             self.print_cardlist(self.real_answer)
             print("suggestion:")
             self.print_cardlist(suggestion)
-            self.update_records(suggestion)
+            self.suggestion_update(suggestion, player)
             self.seggestion_move(suggestion)
             disprove = self.disprove_process(player, suggestion)
             if disprove:
                 if player.only_one_combination():  # make accusation
                     accusation = player.make_accusation()
+                    self.suggestion_update(accusation, player)
                     print("Accusation: ")
                     self.print_cardlist(accusation)
                     if self.accusation_process(player, accusation):
                         return
             else:
                 accusation = player.make_accusation(suggestion)
+                self.suggestion_update(accusation, player)
                 print("Accusation: ")
                 self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
                     return
-
 
     def cardlist_to_label(self, card_list):
         return [card.get_name() for card in card_list]
 
     def print_cardlist(self, card_list):
         print(*card_list, sep=", ")
-
