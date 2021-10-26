@@ -52,9 +52,6 @@ class Character(Card):
     def __lt__(self, other):
         return self.num < other.num
 
-    def get_num(self):
-        return self.num
-
 
 class Room_card(Card):
     def __init__(self, name, num, image=None):

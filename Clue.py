@@ -110,7 +110,7 @@ class Clue(object):
     def generate_players(self, char_list, card_piles):  # generate all players
         player_list = []
         for i in range(len(char_list)):
-            player_list.append(Player(char_list[i], card_piles[i]))
+            player_list.append(Player(char_list[i], card_piles[i], self.n))
         player_list.sort()
         return player_list
 

@@ -2,12 +2,14 @@ from Card import *
 from Vertex import *
 import random
 import math
+from itertools import chain, combinations
 
 
 class Player(object):
-    def __init__(self, char_card, own_card_list):
+    def __init__(self, char_card, own_card_list, n):
         self.character = char_card
         self.num = 0
+        self.n = n
         self.status = True  # active
         self.in_room = False  # 使用v label检查
         self.can_rowdice = True  # block can't rowdice
@@ -158,14 +160,101 @@ class Player(object):
         self.all_rooms.sort()
         return self.all_rooms
 
+    # functions use to update possibility tables
     def suggestion_update(self, suggestion, suggestor):  # suggestion = [room, person, weapon]
-        suggestor_i = suggestor.num
         self.room_p_table[suggestion[0].num][7] += 1
-        self.room_p_table[suggestion[0].num][suggestor_i] = 0
         self.character_p_table[suggestion[1].num][6] += 1
-        self.character_p_table[suggestion[1].num][suggestor_i] = 0
         self.weapon_p_table[suggestion[2].num][6] += 1
-        self.weapon_p_table[suggestion[2].num][suggestor_i] = 0
+        self.zero_out(suggestion, suggestor)  # suggestor doesn't have these cards
+
+    def zero_out_vertical(self, suggestion, person):  # this person has none of card in suggestion
+        i = person.num
+        self.room_p_table[suggestion[0].num][i] = 0
+        self.character_p_table[suggestion[1].num][i] = 0
+        self.weapon_p_table[suggestion[2].num][i] = 0
+
+    def zero_out_horizontal(self, card, person):  # explicitly know this person have this card
+        i, card_type, num = person.num, card.get_category(), card.num
+        if card_type == "weapon":
+            self.weapon_p_table[num][0:6] = [0 for x in range(6)]
+            self.weapon_p_table[num][i] = 1
+        elif card_type == "room":
+            self.room_p_table[num][0:6] = [0 for x in range(6)]
+            self.room_p_table[num][i] = 1
+        else:
+            self.character_p_table[num][0:6] = [0 for x in range(6)]
+            self.character_p_table[num][i] = 1
+
+    def check_1_exist(self, card):
+        i, card_type = card.num, card.get_category()
+        if card_type == "weapon":
+            return 1 in self.weapon_p_table[i][0:6]
+        elif card_type == "room":
+            return 1 in self.room_p_table[i][0:6]
+        else:
+            return 1 in self.character_p_table[i][0:6]
+
+    def conditional_probability(self, suggestion, revealor, suggestor):  # suggestion = [room, person, weapon]
+        i = revealor.get_num()
+        s_i = suggestor.get_num()
+        # room_line, char_line, weapon_line
+        old_lines = [self.room_p_table[suggestion[0].num], self.character_p_table[suggestion[1].num],
+                     self.weapon_p_table[suggestion[2].num]]
+        new_lines = old_lines.copy()
+        Crr, Ccr, Cwr = new_lines[0][i], new_lines[1][i], new_lines[2][i]  # Crr p(room card owned by revealor)
+        denominator = self.denominator(Crr, Ccr, Cwr)
+        # update revealor first
+        numerators_revealor = self.numerator_revealor([Crr, Ccr, Cwr])
+        data_revealor = list(map(lambda x, y: x / y, numerators_revealor, denominator))
+        for x in range(3):
+            new_lines[x][i] = data_revealor[x]  # replace revealor data in new line
+        # update other players
+        for x in range(i + 1, i + self.n):
+            player_i = x % self.n
+            if player_i == self.num:  # no need to update myself
+                continue
+            elif player_i == s_i:  # stop at suggestor
+                break
+            player_card_data = [old_lines[0][player_i], old_lines[1][player_i], old_lines[2][player_i]]
+            player_numerators = self.numerators_other_players([Crr, Ccr, Cwr], player_card_data)
+            data_player = list(map(lambda x, y: x / y, player_numerators, denominator))
+            for x in range(3):
+                new_lines[x][player_i] = data_player[x]
+        self.room_p_table[suggestion[0].num] = new_lines[0]
+        self.character_p_table[suggestion[1].num] = new_lines[1]
+        self.weapon_p_table[suggestion[2].num] = new_lines[2]
+
+    def denominator(self, Crr, Ccr, Cwr):
+        return Crr + Ccr + Cwr - Crr * Ccr - Crr * Cwr - Ccr * Cwr + Crr * Ccr * Cwr
+
+    def numerator_revealor(self, revealor_data):
+        numerator_result = []
+        for i in range(3):
+            line1 = list(
+                map(lambda x: x * revealor_data[i], [1, revealor_data[(i + 1) % 3], revealor_data[(i + 2) % 3]]))
+            # line 2 finds all the subsets of line1 of length 2, find the product of these subsets, sum them up
+            line2 = sum(list(map(lambda x: x[0] * x[1], list(combinations(line1, 2)))))
+            line3 = math.prod(line1)
+            numerator_result.append(sum(line1) - line2 + line3)
+        return numerator_result
+
+    def numerators_other_players(self, revealor_data, player_cards_data):
+        numerator_result = []
+        for i in range(3):
+            line1 = list(map(lambda x: x * player_cards_data[i], revealor_data))
+            # line 2 finds all the subsets of line1 of length 2, find the product of these subsets, sum them up
+            line2 = sum(list(map(lambda x: x[0] * x[1], list(combinations(line1, 2)))))
+            line3 = math.prod(line1)
+            numerator_result.append(sum(line1) - line2 + line3)
+        return numerator_result
+
+    def flatten_table(self, table_type):  # table_type: str weapon, room, char
+        if table_type == "weapon":
+            return list(chain.from_iterable(self.weapon_p_table))
+        elif table_type == "room":
+            return list(chain.from_iterable(self.room_p_table))
+        else:
+            return list(chain.from_iterable(self.character_p_table))
 
     def __str__(self):
         return self.character.get_name()
