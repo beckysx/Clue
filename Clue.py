@@ -162,7 +162,12 @@ class Clue(object):
             print(self.players[player_i].get_name() + " show " + player.get_name() + str(card))
             if card is not None:
                 self.players[i].elliminate(card, self.players[player_i])
+                for y in range(player_i, player_i + self.n):
+                    update_i = x % self.n
+                    self.players[update_i].conditional_probability(suggestion, self.players[update_i], player)
                 return True
+            for player in self.players:
+                player.zero_out_vertical(suggestion, self.players[player_i])
         return False
 
     def row_die(self):
@@ -170,7 +175,15 @@ class Clue(object):
 
     def suggestion_update(self, suggestion, suggestor):  # add number of times mentioned by player for each card
         for player in self.players:
-            player.suggestion_update(suggestion, suggestor)
+            player.suggestion_update(suggestion, suggestor)  # update time mentions
+            player.zero_out_vertical(suggestion, suggestor)  # suggestor doesn't have these cards
+
+    def game_still_active(self):  # check if still have players active or not
+        for i in range(self.n):
+            if self.players[i].isActive():
+                return True
+        self.status = False
+        return False
 
     def one_turn(self):
         for player in self.players:
@@ -183,6 +196,7 @@ class Clue(object):
             elif player.only_one_combination():  # make accusation
                 accusation = player.make_accusation()
                 print("Accusation: ")
+                self.suggestion_update(accusation, player)
                 self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
                     return
@@ -197,14 +211,14 @@ class Clue(object):
             else:  # use dice, if a room give suggestion
                 step = self.row_die()
                 print("row die get:" + str(step) + " steps")
-                reachable_vertices, sorted_rooms = self.board.get_reachable_vertex(player, step)
+                reachable_vertices, sorted_rooms, path_dictionary = self.board.get_reachable_vertex(player, step)
+                player.update_room_distance(path_dictionary)
                 for room in sorted_rooms:
                     if player.is_p_room(room.get_name()):
                         new_position = reachable_vertices[room.get_name()]
                         if new_position is not None:
                             self.player_move_to(player, new_position.get_label())
                             break
-
                 if player.curr_location.isRoom():  # new position is room
                     room_card = self.find_room_card(player.curr_location.get_label())
                     suggestion = player.make_suggestion(room_card)
@@ -234,6 +248,8 @@ class Clue(object):
                 self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
                     return
+            if not self.game_still_active():
+                return
 
     def cardlist_to_label(self, card_list):
         return [card.get_name() for card in card_list]

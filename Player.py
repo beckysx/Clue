@@ -203,11 +203,13 @@ class Player(object):
         new_lines = old_lines.copy()
         Crr, Ccr, Cwr = new_lines[0][i], new_lines[1][i], new_lines[2][i]  # Crr p(room card owned by revealor)
         denominator = self.denominator(Crr, Ccr, Cwr)
+
         # update revealor first
         numerators_revealor = self.numerator_revealor([Crr, Ccr, Cwr])
         data_revealor = list(map(lambda x, y: x / y, numerators_revealor, denominator))
         for x in range(3):
             new_lines[x][i] = data_revealor[x]  # replace revealor data in new line
+
         # update other players
         for x in range(i + 1, i + self.n):
             player_i = x % self.n

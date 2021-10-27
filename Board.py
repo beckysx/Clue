@@ -201,7 +201,7 @@ class Board(object):
                     break
                 elif self.v_inlist(vertex, reachable):
                     result[k] = vertex
-        return result, sorted_rooms
+        return result, sorted_rooms,path_dictionary
 
     def have_secrete_pass(self, room_vertex):
         if room_vertex.label == "Conservatory":
