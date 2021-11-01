@@ -28,7 +28,7 @@ class Clue(object):
 
     def set_up_cards(self, weapons, room_names, char_names):
         char_cards = [Character(name=k, num=v[0]) for k, v in char_names.items()]
-        weapon_cards = [Weapon(name=k, num=v) for k, v in weapons]
+        weapon_cards = [Weapon(name=k, num=v) for k, v in weapons.items()]
         room_cards = []
         i = 0
         for room_name in room_names:

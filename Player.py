@@ -165,7 +165,7 @@ class Player(object):
         self.room_p_table[suggestion[0].num][7] += 1
         self.character_p_table[suggestion[1].num][6] += 1
         self.weapon_p_table[suggestion[2].num][6] += 1
-        self.zero_out(suggestion, suggestor)  # suggestor doesn't have these cards
+        self.zero_out_vertical(suggestion, suggestor)  # suggestor doesn't have these cards
 
     def zero_out_vertical(self, suggestion, person):  # this person has none of card in suggestion
         i = person.num
@@ -202,11 +202,12 @@ class Player(object):
                      self.weapon_p_table[suggestion[2].num]]
         new_lines = old_lines.copy()
         Crr, Ccr, Cwr = new_lines[0][i], new_lines[1][i], new_lines[2][i]  # Crr p(room card owned by revealor)
+
         denominator = self.denominator(Crr, Ccr, Cwr)
 
         # update revealor first
         numerators_revealor = self.numerator_revealor([Crr, Ccr, Cwr])
-        data_revealor = list(map(lambda x, y: x / y, numerators_revealor, denominator))
+        data_revealor = list(map(lambda x: float(x) / denominator, numerators_revealor))
         for x in range(3):
             new_lines[x][i] = data_revealor[x]  # replace revealor data in new line
 
@@ -219,7 +220,7 @@ class Player(object):
                 break
             player_card_data = [old_lines[0][player_i], old_lines[1][player_i], old_lines[2][player_i]]
             player_numerators = self.numerators_other_players([Crr, Ccr, Cwr], player_card_data)
-            data_player = list(map(lambda x, y: x / y, player_numerators, denominator))
+            data_player = list(map(lambda x: float(x) / denominator, player_numerators))
             for x in range(3):
                 new_lines[x][player_i] = data_player[x]
         self.room_p_table[suggestion[0].num] = new_lines[0]
@@ -230,6 +231,7 @@ class Player(object):
         return Crr + Ccr + Cwr - Crr * Ccr - Crr * Cwr - Ccr * Cwr + Crr * Ccr * Cwr
 
     def numerator_revealor(self, revealor_data):
+        print(revealor_data)
         numerator_result = []
         for i in range(3):
             line1 = list(
