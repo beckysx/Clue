@@ -157,15 +157,15 @@ class Player(object):
             for room_card in self.all_rooms:
                 if room_card.name == k:
                     room_card.distance == v[1]
+                    self.room_p_table[room_card.num][6] = v[1]
         self.all_rooms.sort()
         return self.all_rooms
 
     # functions use to update possibility tables
-    def suggestion_update(self, suggestion, suggestor):  # suggestion = [room, person, weapon]
+    def suggestion_update(self, suggestion):  # suggestion = [room, person, weapon]
         self.room_p_table[suggestion[0].num][7] += 1
         self.character_p_table[suggestion[1].num][6] += 1
         self.weapon_p_table[suggestion[2].num][6] += 1
-        self.zero_out_vertical(suggestion, suggestor)  # suggestor doesn't have these cards
 
     def zero_out_vertical(self, suggestion, person):  # this person has none of card in suggestion
         i = person.num
@@ -201,7 +201,10 @@ class Player(object):
         old_lines = [self.room_p_table[suggestion[0].num], self.character_p_table[suggestion[1].num],
                      self.weapon_p_table[suggestion[2].num]]
         new_lines = old_lines.copy()
-        Crr, Ccr, Cwr = new_lines[0][i], new_lines[1][i], new_lines[2][i]  # Crr p(room card owned by revealor)
+        Crr, Ccr, Cwr = old_lines[0][i], old_lines[1][i], old_lines[2][i]  # Crr p(room card owned by revealor)
+        if Crr == 0 and Ccr == 0 and Cwr == 0:
+            zai = 0.0001
+            Crr, Ccr, Cwr = zai, zai, zai
 
         denominator = self.denominator(Crr, Ccr, Cwr)
 

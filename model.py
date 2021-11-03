@@ -4,6 +4,7 @@ import tensorflow as tf
 class ANN(object):
 
     def __init__(self, in_shape_list, out_shape):
+        self.name = None
         self.model = tf.keras.models.Sequential()
         self.model.add(tf.keras.Input(shape=(in_shape_list[0],)))
         for i in range(3):
@@ -16,8 +17,10 @@ class ANN(object):
         self.model.compile(optimizer=opt,
                            loss=tf.keras.losses.MeanSquaredLogarithmicError())
 
-    def fit(self, X_train, y_train, epoch):
-        self.model.fit(X_train, y_train, epochs=epoch)
+    def fit(self, X_train, y_train, epoch=1):
+        print("updating " + self.name)
+        self.model.fit(X_train, y_train, epochs=epoch, batch_size=10)
+        print("updating done")
 
     def predict(self, testX):
         prediction = self.model(testX, training=False)
@@ -26,14 +29,17 @@ class ANN(object):
 
 class room_model(ANN):
     def __init__(self):
-        super.__init__([72, 100, 50, 25], 9)
+        super().__init__([72, 100, 50, 25], 9)
+        self.name = "room_model"
 
 
 class weapon_model(ANN):
     def __init__(self):
-        super.__init__([42, 60, 30, 15], 9)
+        super().__init__([42, 60, 30, 15], 6)
+        self.name = "weapon_model"
 
 
 class char_model(ANN):
     def __init__(self):
-        super.__init__([42, 60, 30, 15], 9)
+        super().__init__([42, 60, 30, 15], 6)
+        self.name = "char_model"

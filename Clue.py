@@ -13,6 +13,9 @@ class Clue(object):
         self.all_cards = weapon_cards + room_cards + char_cards
         self.room_cards = room_cards
         self.real_answer = [random.choice(room_cards), random.choice(char_cards), random.choice(weapon_cards)]
+        self.Y = None
+        self.X = [[] for i in range(3)]
+        self.set_Y(self.real_answer)
         print("real answer:")
         self.print_cardlist(self.real_answer)
         random_n_characters = random.sample(char_cards, n)  # randomly choose n characters as agents
@@ -25,6 +28,16 @@ class Clue(object):
         self.board = Board(room_names, character_names, players)
         self.players_set_up()
         self.status = True  # no one win
+
+    def set_Y(self, real_answer):
+        Yr, Yc, Yw = [0 for i in range(9)], [0 for i in range(6)], [0 for i in range(6)]
+        Y = [Yr, Yc, Yw]
+        for i in range(3):
+            Y[i][real_answer[i].num] = 1
+        self.Y = Y
+
+    def get_Y(self):
+        return self.Y
 
     def set_up_cards(self, weapons, room_names, char_names):
         char_cards = [Character(name=k, num=v[0]) for k, v in char_names.items()]
@@ -119,8 +132,9 @@ class Clue(object):
             for player in self.players:
                 order_in_game = self.players.index(player)
                 player.change_num(order_in_game)
-                self.player_move_to(player, "Start_" + player.get_name())
-                player.player_set_up(self.all_cards, self.n)
+        for player in self.players:
+            self.player_move_to(player, "Start_" + player.get_name())
+            player.player_set_up(self.all_cards, self.n)
 
     def accusation_process(self, player, combination):
         if self.answer_check(combination):
@@ -165,6 +179,7 @@ class Clue(object):
                 for y in range(player_i, player_i + self.n):
                     update_i = x % self.n
                     self.players[update_i].conditional_probability(suggestion, self.players[update_i], player)
+                self.append_X()  # save X data
                 return True
             for player in self.players:
                 player.zero_out_vertical(suggestion, self.players[player_i])
@@ -175,7 +190,7 @@ class Clue(object):
 
     def suggestion_update(self, suggestion, suggestor):  # add number of times mentioned by player for each card
         for player in self.players:
-            player.suggestion_update(suggestion, suggestor)  # update time mentions
+            player.suggestion_update(suggestion)  # update time mentions
             player.zero_out_vertical(suggestion, suggestor)  # suggestor doesn't have these cards
 
     def game_still_active(self):  # check if still have players active or not
@@ -185,7 +200,7 @@ class Clue(object):
         self.status = False
         return False
 
-    def one_turn(self):
+    def one_turn(self, turn_num):
         for player in self.players:
             print(player.character.name + "'s turn:")
             curr_place = player.curr_location
@@ -256,3 +271,12 @@ class Clue(object):
 
     def print_cardlist(self, card_list):
         print(*card_list, sep=", ")
+
+    def append_X(self):
+        for player in self.players:
+            self.X[0].append(player.flatten_table("room"))
+            self.X[1].append(player.flatten_table("char"))
+            self.X[2].append(player.flatten_table("weapon"))
+
+    def get_X(self):
+        return self.X

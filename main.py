@@ -2,6 +2,7 @@ from Vertex import *
 from Card import *
 from Clue import *
 import random
+from model import *
 
 if __name__ == '__main__':
     room_names = {"Conservatory": [[4, 4], "Lounge"], "Billiard": [[0, 12], [5, 8]], "Library": [[2, 12], [6, 15]],
@@ -11,10 +12,24 @@ if __name__ == '__main__':
     character_names = {"Mr.Green": [3, [8, 0]], "Mrs.White": [2, [13, 0]], "Col.Mustard": [1, [21, 16]],
                        "Prof.Plum": [5, [0, 18]], "Miss.Scarlett": [0, [15, 22]],
                        "Mrs.Peacock": [4, [0, 5]]}
-    weapons = {"Candlestick":0, "Dagger":1, "Lead_Pipe":2, "Revolver":3, "Rope":4, "Wrench":5}
-    test = Clue(3, weapons, room_names, character_names)
-    turn = 0
-    while test.status:
-        turn += 1
-        print("TURN: " + str(turn))
-        test.one_turn()
+    weapons = {"Candlestick": 0, "Dagger": 1, "Lead_Pipe": 2, "Revolver": 3, "Rope": 4, "Wrench": 5}
+    models = [room_model(), char_model(), weapon_model()]
+
+    for i in range(1):
+        X = [[], [], []]
+        Y = [[], [], []]
+        game = Clue(3, weapons, room_names, character_names)
+        gameY = game.get_Y()
+        for count in range(3):
+            Y[count].append(gameY[count])
+        turn_num = 0
+        while game.status:
+            turn_num += 1
+            print("TURN: " + str(turn_num))
+            game.one_turn(turn_num)
+        gameX = game.get_X()
+        for count in range(3):
+            X[count].extend(gameX[count])
+        for count in range(3):
+            y_true = [Y[count][0] for c in range(len(X[count]))]
+            models[count].fit(X[count], y_true)
