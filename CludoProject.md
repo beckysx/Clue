@@ -6,5 +6,7 @@ data is gained in Clue.py and stored in X in main.py (might have separate file l
 
 Main.py is used to simulate the game, store data, train model
 
+checkponits folder saves all weights for each genneration
+
 
 
