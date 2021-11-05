@@ -84,10 +84,10 @@ class Player(object):
         return self.can_suggest
 
     def only_one_combination(self):
-        print("possible choices:")
-        print(*self.p_rooms, sep=" ")
-        print(*self.p_weapons, sep=" ")
-        print(*self.p_characters, sep=" ")
+        # print("possible choices:")
+        # print(*self.p_rooms, sep=" ")
+        # print(*self.p_weapons, sep=" ")
+        # print(*self.p_characters, sep=" ")
         return len(self.p_rooms) == 1 and len(self.p_weapons) == 1 and len(self.p_characters) == 1
 
     def make_suggestion(self, room):
@@ -130,18 +130,18 @@ class Player(object):
         if card.isRoom():
             self.im_rooms.append(card)
             self.p_rooms = card.delete_from(self.p_rooms)
-            print("after delete from")
-            print(*self.p_rooms, sep=",")
+            # print("after delete from")
+            # print(*self.p_rooms, sep=",")
         elif card.isWeapon():
             self.im_weapons.append(card)
             self.p_weapons = card.delete_from(self.p_weapons)
-            print("after delete from")
-            print(*self.p_weapons, sep=",")
+            # print("after delete from")
+            # print(*self.p_weapons, sep=",")
         elif card.isChar():
             self.im_characters.append(card)
             self.p_characters = card.delete_from(self.p_characters)
-            print("after delete from")
-            print(*self.p_characters, sep=",")
+            # print("after delete from")
+            # print(*self.p_characters, sep=",")
 
     def make_accusation(self, suggestion=None):
         self.status = False
@@ -234,7 +234,7 @@ class Player(object):
         return Crr + Ccr + Cwr - Crr * Ccr - Crr * Cwr - Ccr * Cwr + Crr * Ccr * Cwr
 
     def numerator_revealor(self, revealor_data):
-        print(revealor_data)
+        # print(revealor_data)
         numerator_result = []
         for i in range(3):
             line1 = list(

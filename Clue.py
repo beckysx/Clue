@@ -173,7 +173,7 @@ class Clue(object):
         for x in range(i + 1, i + self.n):
             player_i = x % self.n
             card = self.players[player_i].disprove(suggestion)
-            print(self.players[player_i].get_name() + " show " + player.get_name() + str(card))
+            #print(self.players[player_i].get_name() + " show " + player.get_name() + str(card))
             if card is not None:
                 self.players[i].elliminate(card, self.players[player_i])
                 for y in range(player_i, player_i + self.n):
@@ -202,7 +202,7 @@ class Clue(object):
 
     def one_turn(self, turn_num):
         for player in self.players:
-            print(player.character.name + "'s turn:")
+            #print(player.character.name + "'s turn:")
             curr_place = player.curr_location
             secrete_pass = self.board.have_secrete_pass(curr_place)
             if not player.isActive():
@@ -210,9 +210,9 @@ class Clue(object):
             # 四个选择[stay make suggestion, secrete pass, accusation, dice]
             elif player.only_one_combination():  # make accusation
                 accusation = player.make_accusation()
-                print("Accusation: ")
+                #print("Accusation: ")
                 self.suggestion_update(accusation, player)
-                self.print_cardlist(accusation)
+                #self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
                     return
             elif player.can_make_suggest():  # make suggestion
@@ -225,7 +225,7 @@ class Clue(object):
                 suggestion = player.make_suggestion(room_card)
             else:  # use dice, if a room give suggestion
                 step = self.row_die()
-                print("row die get:" + str(step) + " steps")
+                #print("row die get:" + str(step) + " steps")
                 reachable_vertices, sorted_rooms, path_dictionary = self.board.get_reachable_vertex(player, step)
                 player.update_room_distance(path_dictionary)
                 for room in sorted_rooms:
@@ -238,13 +238,13 @@ class Clue(object):
                     room_card = self.find_room_card(player.curr_location.get_label())
                     suggestion = player.make_suggestion(room_card)
                 else:  # new position not room
-                    print("move to blank")
+                    #print("move to blank")
                     continue
             # records num of times mentioned in suggestion
-            print("real answer:")
-            self.print_cardlist(self.real_answer)
-            print("suggestion:")
-            self.print_cardlist(suggestion)
+            #print("real answer:")
+            #self.print_cardlist(self.real_answer)
+            #print("suggestion:")
+            #self.print_cardlist(suggestion)
             self.suggestion_update(suggestion, player)
             self.seggestion_move(suggestion)
             disprove = self.disprove_process(player, suggestion)
@@ -252,15 +252,15 @@ class Clue(object):
                 if player.only_one_combination():  # make accusation
                     accusation = player.make_accusation()
                     self.suggestion_update(accusation, player)
-                    print("Accusation: ")
-                    self.print_cardlist(accusation)
+                    #print("Accusation: ")
+                    #self.print_cardlist(accusation)
                     if self.accusation_process(player, accusation):
                         return
             else:
                 accusation = player.make_accusation(suggestion)
                 self.suggestion_update(accusation, player)
-                print("Accusation: ")
-                self.print_cardlist(accusation)
+                #print("Accusation: ")
+                #self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
                     return
             if not self.game_still_active():

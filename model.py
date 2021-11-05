@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 
 class ANN(object):
@@ -19,12 +20,15 @@ class ANN(object):
 
     def fit(self, X_train, y_train, epoch=1):
         print("updating " + self.name)
-        self.model.fit(X_train, y_train, epochs=epoch, batch_size=10)
+        self.model.fit(X_train, y_train, epochs=epoch, batch_size=50)
         print("updating done")
 
     def predict(self, testX):
-        prediction = self.model(testX, training=False)
-        return prediction.index(max(prediction))
+        predict = self.model.predict(np.array([testX]))  # shape : [1,72]
+        return np.where(predict == np.amax(predict))[1][0]
+
+    def save_w(self, filepath, gen_num):
+        self.model.save_weights(filepath + "g" + str(gen_num), overwrite=True)
 
 
 class room_model(ANN):
