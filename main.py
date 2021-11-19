@@ -4,23 +4,22 @@ from Clue import *
 from random import randint
 from model import *
 from tensorflow.keras.callbacks import ModelCheckpoint
-
+from tensorflow.keras.models import load_model
 
 
 def create_next_generation(model_list, gen_num):
-    model_list[0].append(room_model().model.load_weights(room_path + "g" + str(gen_num - 1)))
-    model_list[1].append(char_model().model.load_weights(char_path + "g" + str(gen_num - 1)))
-    model_list[2].append(weapon_model().model.load_weights(weapon_path + "g" + str(gen_num - 1)))
+    model_list[0].append(room_model())
+    model_list[0][gen_num].model = load_model(room_path + "g" + str(gen_num - 1))
+    model_list[1].append(char_model())
+    model_list[1][gen_num].model = load_model(char_path + "g" + str(gen_num - 1))
+    model_list[2].append(weapon_model())
+    model_list[2][gen_num].model = load_model(weapon_path + "g" + str(gen_num - 1))
 
 
 def save_check_points(model_list, gen_num):
-    model_list[0][gen_num].save_w(room_path, gen_num)
-    print("save room" + str(gen_num))
-    model_list[1][gen_num].save_w(char_path, gen_num)
-    print("save char" + str(gen_num))
-    model_list[2][gen_num].save_w(weapon_path, gen_num)
-    print("save weapon" + str(gen_num))
-
+    model_list[0][gen_num].save_model(room_path, gen_num)
+    model_list[1][gen_num].save_model(char_path, gen_num)
+    model_list[2][gen_num].save_model(weapon_path, gen_num)
 
 
 if __name__ == '__main__':
@@ -36,28 +35,27 @@ if __name__ == '__main__':
     room_path = "checkpoints/room/"
     char_path = "checkpoints/char/"
     weapon_path = "checkpoints/weapon/"
+    save_check_points(models, 0)  # save initial random model  g0
 
-    for gen_num in range(2):
+    for gen_num in range(1, 11, 1):
         if gen_num > 0:  # create next generation based on previous checkpoints
-            create_next_generation(models,gen_num)
-        X, Y = [[], [], []], [[], [], []]
-        for i in range(1):
-            print("generation" + str(gen_num) + "  game" + str(i))
-            game = Clue(randint(3, 5), weapons, room_names, character_names)
+            create_next_generation(models, gen_num)
+        for i in range(50):
+            # print("generation" + str(gen_num) + "  game" + str(i))
+            game = Clue(3, weapons, room_names, character_names)
             gameY = game.get_Y()
-            for count in range(3):
-                Y[count].append(gameY[count])
             turn_num = 0
+            X = [[], [], []]
             while game.status:
                 turn_num += 1
-                if turn_num % 20 == 0:
-                    print("TURN: " + str(turn_num))
+                # if turn_num % 20 == 0:
+                #     print("TURN: " + str(turn_num))
                 game.one_turn(turn_num)
-            gameX = game.get_X()
+                gameX = game.get_X()  # [[],[],[]]
+                for count in range(3):
+                    X[count].extend(gameX[count])
             for count in range(3):
-                X[count].extend(gameX[count])
-            for count in range(3):
-                y_true = [Y[count][0] for c in range(len(X[count]))]  # duplicate true y for every training data
+                y_true = [gameY[count] for c in range(len(X[count]))]  # duplicate true y for every training data
                 models[count][gen_num].fit(X[count], y_true)
 
         # before next generation, save checkpoints for next generation

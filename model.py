@@ -27,8 +27,8 @@ class ANN(object):
         predict = self.model.predict(np.array([testX]))  # shape : [1,72]
         return np.where(predict == np.amax(predict))[1][0]
 
-    def save_w(self, filepath, gen_num):
-        self.model.save_weights(filepath + "g" + str(gen_num), overwrite=True)
+    def save_model(self, filepath, gen_num):
+        self.model.save(filepath + "g" + str(gen_num))
 
 
 class room_model(ANN):

@@ -16,15 +16,16 @@ class Clue(object):
         self.Y = None
         self.X = [[] for i in range(3)]
         self.set_Y(self.real_answer)
-        print("real answer:")
-        self.print_cardlist(self.real_answer)
+        self.lose = 0
+        # print("real answer:")
+        # self.print_cardlist(self.real_answer)
         random_n_characters = random.sample(char_cards, n)  # randomly choose n characters as agents
         self.fake_cards = self.get_fake_cards()
         card_piles = self.distribute_cards(n)
         players = self.generate_players(random_n_characters, card_piles)
         self.players = players
-        print("players:")
-        self.print_cardlist(self.players)
+        # print("players:")
+        # self.print_cardlist(self.players)
         self.board = Board(room_names, character_names, players)
         self.players_set_up()
         self.status = True  # no one win
@@ -201,6 +202,7 @@ class Clue(object):
         return False
 
     def one_turn(self, turn_num):
+        self.X = [[] for i in range(3)]
         for player in self.players:
             #print(player.character.name + "'s turn:")
             curr_place = player.curr_location
@@ -214,6 +216,10 @@ class Clue(object):
                 self.suggestion_update(accusation, player)
                 #self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
+                    return
+                self.lose += 1
+                if self.lose == self.n-1:
+                    self.status = False
                     return
             elif player.can_make_suggest():  # make suggestion
                 room_card = self.find_room_card(curr_place.get_label())
@@ -252,9 +258,13 @@ class Clue(object):
                 if player.only_one_combination():  # make accusation
                     accusation = player.make_accusation()
                     self.suggestion_update(accusation, player)
-                    #print("Accusation: ")
-                    #self.print_cardlist(accusation)
+                    # print("Accusation: ")
+                    # self.print_cardlist(accusation)
                     if self.accusation_process(player, accusation):
+                        return
+                    self.lose += 1
+                    if self.lose == self.n-1:
+                        self.status = False
                         return
             else:
                 accusation = player.make_accusation(suggestion)
