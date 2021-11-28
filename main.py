@@ -40,9 +40,9 @@ if __name__ == '__main__':
     for gen_num in range(1, 11, 1):
         if gen_num > 0:  # create next generation based on previous checkpoints
             create_next_generation(models, gen_num)
-        for i in range(50):
-            # print("generation" + str(gen_num) + "  game" + str(i))
-            game = Clue(3, weapons, room_names, character_names)
+        for i in range(1):
+            print("generation" + str(gen_num) + "  game" + str(i))
+            game = Clue(6, weapons, room_names, character_names)
             gameY = game.get_Y()
             turn_num = 0
             X = [[], [], []]
@@ -54,7 +54,11 @@ if __name__ == '__main__':
                 gameX = game.get_X()  # [[],[],[]]
                 for count in range(3):
                     X[count].extend(gameX[count])
+                if turn_num > 700:
+                    break
             for count in range(3):
+                if len(X[count]) == 0:
+                    continue
                 y_true = [gameY[count] for c in range(len(X[count]))]  # duplicate true y for every training data
                 models[count][gen_num].fit(X[count], y_true)
 

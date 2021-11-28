@@ -204,7 +204,7 @@ class Clue(object):
     def one_turn(self, turn_num):
         self.X = [[] for i in range(3)]
         for player in self.players:
-            #print(player.character.name + "'s turn:")
+            print(player.character.name + "'s turn:")
             curr_place = player.curr_location
             secrete_pass = self.board.have_secrete_pass(curr_place)
             if not player.isActive():
@@ -212,9 +212,9 @@ class Clue(object):
             # 四个选择[stay make suggestion, secrete pass, accusation, dice]
             elif player.only_one_combination():  # make accusation
                 accusation = player.make_accusation()
-                #print("Accusation: ")
+                print("Accusation: ")
                 self.suggestion_update(accusation, player)
-                #self.print_cardlist(accusation)
+                self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
                     return
                 self.lose += 1
@@ -244,13 +244,13 @@ class Clue(object):
                     room_card = self.find_room_card(player.curr_location.get_label())
                     suggestion = player.make_suggestion(room_card)
                 else:  # new position not room
-                    #print("move to blank")
+                    print("move to blank")
                     continue
             # records num of times mentioned in suggestion
-            #print("real answer:")
-            #self.print_cardlist(self.real_answer)
-            #print("suggestion:")
-            #self.print_cardlist(suggestion)
+            print("real answer:")
+            self.print_cardlist(self.real_answer)
+            print("suggestion:")
+            self.print_cardlist(suggestion)
             self.suggestion_update(suggestion, player)
             self.seggestion_move(suggestion)
             disprove = self.disprove_process(player, suggestion)
@@ -258,8 +258,8 @@ class Clue(object):
                 if player.only_one_combination():  # make accusation
                     accusation = player.make_accusation()
                     self.suggestion_update(accusation, player)
-                    # print("Accusation: ")
-                    # self.print_cardlist(accusation)
+                    print("Accusation: ")
+                    self.print_cardlist(accusation)
                     if self.accusation_process(player, accusation):
                         return
                     self.lose += 1
@@ -269,8 +269,8 @@ class Clue(object):
             else:
                 accusation = player.make_accusation(suggestion)
                 self.suggestion_update(accusation, player)
-                #print("Accusation: ")
-                #self.print_cardlist(accusation)
+                print("Accusation: ")
+                self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
                     return
             if not self.game_still_active():
