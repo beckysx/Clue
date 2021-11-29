@@ -6,7 +6,7 @@ from itertools import chain, combinations
 
 
 class Player(object):
-    def __init__(self, char_card, own_card_list, n):
+    def __init__(self, char_card, own_card_list, n, agents):  # agents  = [room_m,char_m,weapon_m]
         self.character = char_card
         self.num = 0
         self.n = n
@@ -23,6 +23,7 @@ class Player(object):
         self.room_p_table = [[0 for i in range(8)] for i in range(9)]  # 0~5 players, 6 distance, 7 time records
         self.weapon_p_table = [[0 for i in range(7)] for i in range(6)]  # 0~5 players, 6 time records
         self.character_p_table = [[0 for i in range(7)] for i in range(6)]  # 0~5 players, 6 time records
+        self.agents = agents
 
     def player_set_up(self, all_cards, n):
         p = 1 / (n - 1)
@@ -94,8 +95,21 @@ class Player(object):
         self.can_suggest = False
         person = random.choice(self.p_characters)
         weapon = random.choice(self.p_weapons)
-        self.can_suggest = False
-        return [room, person, weapon]
+        result = [room, person, weapon]
+        agent_person = self.agents[1].predict(self.flatten_table("char"))
+        agent_weapon = self.agents[2].predict(self.flatten_table("weapon"))
+        agent_c, agent_w = False, False
+        for card in self.p_characters:
+            if card.num == agent_person:
+                agent_c = True
+                result[1] = card
+                break
+        for card in self.p_weapons:
+            if card.num == agent_weapon:
+                agent_w = True
+                result[2] = card
+                break
+        return result
 
     def have_card(self, card):
         for c in self.cards_have:

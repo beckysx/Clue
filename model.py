@@ -19,9 +19,9 @@ class ANN(object):
                            loss=tf.keras.losses.MeanSquaredLogarithmicError())
 
     def fit(self, X_train, y_train, epoch=1):
-        print("updating " + self.name)
+        # print("updating " + self.name)
         self.model.fit(X_train, y_train, epochs=epoch, batch_size=50)
-        print("updating done")
+        # print("updating done")
 
     def predict(self, testX):
         predict = self.model.predict(np.array([testX]))  # shape : [1,72]

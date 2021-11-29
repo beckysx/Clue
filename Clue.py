@@ -5,7 +5,7 @@ from Board import *
 
 
 class Clue(object):
-    def __init__(self, n, weapons, room_names, character_names):
+    def __init__(self, n, weapons, room_names, character_names, agents):
         self.n = n
         room_cards, char_cards, weapon_cards = self.set_up_cards(weapons, room_names, character_names)
 
@@ -22,13 +22,14 @@ class Clue(object):
         random_n_characters = random.sample(char_cards, n)  # randomly choose n characters as agents
         self.fake_cards = self.get_fake_cards()
         card_piles = self.distribute_cards(n)
-        players = self.generate_players(random_n_characters, card_piles)
+        players = self.generate_players(random_n_characters, card_piles, agents)
         self.players = players
         # print("players:")
         # self.print_cardlist(self.players)
         self.board = Board(room_names, character_names, players)
         self.players_set_up()
         self.status = True  # no one win
+        self.winner = None
 
     def set_Y(self, real_answer):
         Yr, Yc, Yw = [0 for i in range(9)], [0 for i in range(6)], [0 for i in range(6)]
@@ -121,10 +122,13 @@ class Clue(object):
             card_piles[i % n].append(self.fake_cards[i])
         return card_piles
 
-    def generate_players(self, char_list, card_piles):  # generate all players
+    def generate_players(self, char_list, card_piles, agents):  # generate all players
         player_list = []
         for i in range(len(char_list)):
-            player_list.append(Player(char_list[i], card_piles[i], self.n))
+            if i % 2 == 0:
+                player_list.append(Player(char_list[i], card_piles[i], self.n, agents[0]))
+            else:
+                player_list.append(Player(char_list[i], card_piles[i], self.n, agents[1]))
         player_list.sort()
         return player_list
 
@@ -139,10 +143,10 @@ class Clue(object):
 
     def accusation_process(self, player, combination):
         if self.answer_check(combination):
-            print(str(player) + " win")
+            # print(str(player) + " win")
             self.status = False
             return True
-        print(str(player) + " lost")
+        # print(str(player) + " lost")
         return False
 
     def answer_check(self, combination):  # match the accusation with real answer
@@ -174,7 +178,7 @@ class Clue(object):
         for x in range(i + 1, i + self.n):
             player_i = x % self.n
             card = self.players[player_i].disprove(suggestion)
-            #print(self.players[player_i].get_name() + " show " + player.get_name() + str(card))
+            # print(self.players[player_i].get_name() + " show " + player.get_name() + str(card))
             if card is not None:
                 self.players[i].elliminate(card, self.players[player_i])
                 for y in range(player_i, player_i + self.n):
@@ -204,7 +208,7 @@ class Clue(object):
     def one_turn(self, turn_num):
         self.X = [[] for i in range(3)]
         for player in self.players:
-            print(player.character.name + "'s turn:")
+            #print(player.character.name + "'s turn:")
             curr_place = player.curr_location
             secrete_pass = self.board.have_secrete_pass(curr_place)
             if not player.isActive():
@@ -212,14 +216,18 @@ class Clue(object):
             # 四个选择[stay make suggestion, secrete pass, accusation, dice]
             elif player.only_one_combination():  # make accusation
                 accusation = player.make_accusation()
-                print("Accusation: ")
+                # print("Accusation: ")
                 self.suggestion_update(accusation, player)
-                self.print_cardlist(accusation)
+                # self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
+                    self.winner = self.players.index(player)
                     return
                 self.lose += 1
-                if self.lose == self.n-1:
+                if self.lose == self.n - 1:
                     self.status = False
+                    for winner in self.players:
+                        if winner.isActive():
+                            self.winner = self.players.index(winner)
                     return
             elif player.can_make_suggest():  # make suggestion
                 room_card = self.find_room_card(curr_place.get_label())
@@ -231,26 +239,36 @@ class Clue(object):
                 suggestion = player.make_suggestion(room_card)
             else:  # use dice, if a room give suggestion
                 step = self.row_die()
-                #print("row die get:" + str(step) + " steps")
+                # print("row die get:" + str(step) + " steps")
                 reachable_vertices, sorted_rooms, path_dictionary = self.board.get_reachable_vertex(player, step)
                 player.update_room_distance(path_dictionary)
+                agent_room = player.agents[0].predict(player.flatten_table("room"))
+                moved = False
                 for room in sorted_rooms:
-                    if player.is_p_room(room.get_name()):
+                    if room.num == agent_room and player.is_p_room(room.get_name()):
                         new_position = reachable_vertices[room.get_name()]
                         if new_position is not None:
                             self.player_move_to(player, new_position.get_label())
+                            moved = True
                             break
+                if not moved:
+                    for room in sorted_rooms:
+                        if player.is_p_room(room.get_name()):
+                            new_position = reachable_vertices[room.get_name()]
+                            if new_position is not None:
+                                self.player_move_to(player, new_position.get_label())
+                                break
                 if player.curr_location.isRoom():  # new position is room
                     room_card = self.find_room_card(player.curr_location.get_label())
                     suggestion = player.make_suggestion(room_card)
                 else:  # new position not room
-                    print("move to blank")
+                    # print("move to blank")
                     continue
             # records num of times mentioned in suggestion
-            print("real answer:")
-            self.print_cardlist(self.real_answer)
-            print("suggestion:")
-            self.print_cardlist(suggestion)
+            # print("real answer:")
+            # self.print_cardlist(self.real_answer)
+            # print("suggestion:")
+            # self.print_cardlist(suggestion)
             self.suggestion_update(suggestion, player)
             self.seggestion_move(suggestion)
             disprove = self.disprove_process(player, suggestion)
@@ -258,20 +276,32 @@ class Clue(object):
                 if player.only_one_combination():  # make accusation
                     accusation = player.make_accusation()
                     self.suggestion_update(accusation, player)
-                    print("Accusation: ")
-                    self.print_cardlist(accusation)
+                    # print("Accusation: ")
+                    # self.print_cardlist(accusation)
                     if self.accusation_process(player, accusation):
+                        self.winner = self.players.index(player)
                         return
                     self.lose += 1
-                    if self.lose == self.n-1:
+                    if self.lose == self.n - 1:
                         self.status = False
+                        for winner in self.players:
+                            if winner.isActive():
+                                self.winner = self.players.index(winner)
                         return
             else:
-                accusation = player.make_accusation(suggestion)
+                accusation = player.make_accusation(suggestion)  # no one show card
                 self.suggestion_update(accusation, player)
-                print("Accusation: ")
-                self.print_cardlist(accusation)
+                # print("Accusation: ")
+                # self.print_cardlist(accusation)
                 if self.accusation_process(player, accusation):
+                    self.winner = self.players.index(player)
+                    return
+                self.lose += 1
+                if self.lose == self.n - 1:
+                    self.status = False
+                    for winner in self.players:
+                        if winner.isActive():
+                            self.winner = self.players.index(winner)
                     return
             if not self.game_still_active():
                 return
